@@ -4,6 +4,7 @@ import Header from "./components/Header/Header";
 
 import { connect, sendMsg } from "./api";
 import ChatHistory from "./components/ChatHistory/ChatHistory";
+import ChanInput from "./components/ChatInput/ChatInput";
 
 class App extends Component {
   state = {
@@ -21,8 +22,13 @@ class App extends Component {
   }
 
   // send func to send messages
-  send() {
-    sendMsg("HELLO from React ");
+  send(event) {
+    // if ENTER(13) is pressed
+    if (event.keyCode === 13) {
+      sendMsg(event.target.value);
+      event.target.value = "";
+    }
+
   }
 
   render() {
@@ -30,7 +36,7 @@ class App extends Component {
       <div className="App">
         <Header />
         <ChatHistory chatHistory={this.state.chatHistory} />
-        <button onClick={this.send}>Send Message</button>
+        <ChanInput send={this.send} />
       </div>
     );
   }
