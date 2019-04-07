@@ -2,61 +2,49 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/gorilla/websocket"
+	"github.com/karanbirsingh7/chat-go-react/backend/pkg/websocket"
 )
 
-// Define upgrader which requires a READ and WRITE size
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-
-	// CORS probably??
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
-// Reader: listen for new messages being sent to our WebSocket endpoint
-func reader(conn *websocket.Conn) {
-	// GoLang while loop
-	for {
-		// read message
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		// print what is being recived on endpoint
-		fmt.Println(string(p))
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
-		}
-	}
-}
-
 // define out websocket route/path/endpoint
-func serveWs(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Message recieved from: ", r.Host)
-
+func serveWs(pool *websocket.Pool, w http.ResponseWriter, r *http.Request) {
 	//upgrade this connection to a websocket
-	ws, err := upgrader.Upgrade(w, r, nil)
+	conn, err := websocket.Upgrade(w, r)
+
 	if err != nil {
-		log.Println(err)
+		fmt.Fprintf(w, "%+V\n", err)
 	}
 
-	// listen indefinitely for new message coming through websocket connection
-	reader(ws)
+	//Create new client
+	client := &websocket.Client{
+		Conn: conn,
+		Pool: pool,
+	}
+
+	// Register client in pool
+	pool.Register <- client
+
+	// Listen for any messages from client
+	client.Read()
 }
 
 func setupRoutes() {
+	pool := websocket.NewPool()
+
+	// This triggers a while loop in background where channels become active and listen if anything comes up
+	go pool.Start()
+
+	// Root handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Simple Server")
+		fmt.Fprintf(w, "Server is running")
 	})
 
-	http.HandleFunc("/ws", serveWs)
+	// WebSocket handler
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(pool, w, r)
+	})
+
 }
 
 func main() {
