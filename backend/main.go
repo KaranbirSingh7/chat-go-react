@@ -28,7 +28,7 @@ func reader(conn *websocket.Conn) {
 			return
 		}
 
-		// print what is being sent
+		// print what is being recived on endpoint
 		fmt.Println(string(p))
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println(err)
@@ -39,7 +39,7 @@ func reader(conn *websocket.Conn) {
 
 // define out websocket route/path/endpoint
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Host)
+	fmt.Println("Message recieved from: ", r.Host)
 
 	//upgrade this connection to a websocket
 	ws, err := upgrader.Upgrade(w, r, nil)
