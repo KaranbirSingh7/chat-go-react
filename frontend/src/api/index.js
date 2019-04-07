@@ -2,7 +2,7 @@ let socketURL = "ws://localhost:8000/ws"
 let socket = new WebSocket(socketURL)
 
 // Connect method handles whole lifecycle of a single conenection
-let connect = () => {
+let connect = (cb) => {
   console.log(`Attempting connection at ${socketURL}`);
 
   // CONNECTION CREATED
@@ -13,6 +13,7 @@ let connect = () => {
   // MESSAGE RECEIVED
   socket.onmessage = (msg) => {
     console.log(msg);
+    cb(msg)
   } 
 
   // CONNECTION CLOSED
